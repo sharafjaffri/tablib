@@ -153,6 +153,8 @@ class Dataset(object):
 
     """
 
+    _formats = {}
+
     def __init__(self, *args, **kwargs):
         self._data = list(Row(arg) for arg in args)
         self.__headers = None
@@ -254,11 +256,13 @@ class Dataset(object):
             try:
                 try:
                     setattr(cls, fmt.title, property(fmt.export_set, fmt.import_set))
+                    cls._formats[fmt.title] = (fmt.export_set, fmt.import_set)
                 except AttributeError:
                     setattr(cls, fmt.title, property(fmt.export_set))
+                    cls._formats[fmt.title] = (fmt.export_set, None)
 
             except AttributeError:
-                pass
+                cls._formats[fmt.title] = (None, None)
 
 
     def _validate(self, row=None, col=None, safety=False):
@@ -428,6 +432,29 @@ class Dataset(object):
             except TypeError:
                 return 0
 
+    def import_(self, format, in_stream, **kwargs):
+        """
+        Import `in_stream` to the :class:`Dataset` object using the `format`.
+
+        :param \*\*kwargs: (optional) custom configuration to the format `import_set`.
+        """
+        export_set, import_set = self._formats.get(format, (None, None))
+        if not import_set:
+            raise UnsupportedFormat
+
+        import_set(self, in_stream, **kwargs)
+
+    def export(self, format, **kwargs):
+        """
+        Export :class:`Dataset` object to `format`.
+
+        :param \*\*kwargs: (optional) custom configuration to the format `export_set`.
+        """
+        export_set, import_set = self._formats.get(format, (None, None))
+        if not export_set:
+            raise UnsupportedFormat
+
+        return export_set(self, **kwargs)
 
     # -------
     # Formats
