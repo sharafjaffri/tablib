@@ -948,6 +948,8 @@ class Databook(object):
     """A book of :class:`Dataset` objects.
     """
 
+    _formats = {}
+
     def __init__(self, sets=None):
 
         if sets is None:
@@ -976,11 +978,13 @@ class Databook(object):
             try:
                 try:
                     setattr(cls, fmt.title, property(fmt.export_book, fmt.import_book))
+                    cls._formats[fmt.title] = (fmt.export_book, fmt.import_book)
                 except AttributeError:
                     setattr(cls, fmt.title, property(fmt.export_book))
+                    cls._formats[fmt.title] = (fmt.export_book, None)
 
             except AttributeError:
-                pass
+                cls._formats[fmt.title] = (None, None)
 
     def sheets(self):
         return self._datasets
@@ -1014,6 +1018,31 @@ class Databook(object):
     def size(self):
         """The number of the :class:`Dataset` objects within :class:`Databook`."""
         return len(self._datasets)
+
+
+    def import_(self, format, in_stream, **kwargs):
+        """
+        Import `in_stream` to the :class:`Databook` object using the `format`.
+
+        :param \*\*kwargs: (optional) custom configuration to the format `import_book`.
+        """
+        export_book, import_book = self._formats.get(format, (None, None))
+        if not import_book:
+            raise UnsupportedFormat
+
+        import_book(self, in_stream, **kwargs)
+
+    def export(self, format, **kwargs):
+        """
+        Export :class:`Databook` object to `format`.
+
+        :param \*\*kwargs: (optional) custom configuration to the format `export_book`.
+        """
+        export_book, import_book = self._formats.get(format, (None, None))
+        if not export_book:
+            raise UnsupportedFormat
+
+        return export_book(self, **kwargs)
 
 
 def detect(stream):

@@ -718,6 +718,10 @@ Old       |Man       |100500
         data.import_('csv', _csv, **kwargs)
         self.assertEqual(3, len(data.headers))
 
+    def test_databook_formatter_support_kwargs(self):
+        """Test XLSX export with formatter configuration."""
+        self.founders.export('xlsx', freeze_panes=False)
+
 
 if __name__ == '__main__':
     unittest.main()
