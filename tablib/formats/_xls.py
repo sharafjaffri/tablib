@@ -4,6 +4,7 @@
 """
 
 import sys
+import datetime
 
 from tablib.compat import BytesIO, xlwt, xlrd, XLRDError
 import tablib
@@ -104,6 +105,10 @@ def dset_sheet(dataset, ws):
     """Completes given worksheet from given Dataset."""
     _package = dataset._package(dicts=False)
 
+    time_style = xlwt.easyxf(num_format_str="HH:MM:SS")
+    date_style = xlwt.easyxf(num_format_str="YYYY-MM-DD")
+    datetime_style = xlwt.easyxf(num_format_str="YYYY-MM-DD HH:MM:SS")
+
     for i, sep in enumerate(dataset._separators):
         _offset = i
         _package.insert((sep[0] + _offset), (sep[1],))
@@ -127,7 +132,13 @@ def dset_sheet(dataset, ws):
             # wrap the rest
             else:
                 try:
-                    if '\n' in col:
+                    if isinstance(col, datetime.datetime):
+                        ws.write(i, j, col, datetime_style)
+                    elif isinstance(col, datetime.time):
+                        ws.write(i, j, col, time_style)
+                    elif isinstance(col, datetime.date):
+                        ws.write(i, j, col, date_style)
+                    elif isinstance(col, str) and '\n' in col:
                         ws.write(i, j, col, wrap)
                     else:
                         ws.write(i, j, col)
