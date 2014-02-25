@@ -142,5 +142,5 @@ def dset_sheet(dataset, ws):
                         ws.write(i, j, col, wrap)
                     else:
                         ws.write(i, j, col)
-                except TypeError as ex:
+                except TypeError:
                     ws.write(i, j, col)
